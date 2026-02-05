@@ -12,6 +12,9 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -36,6 +39,7 @@ fun AshaDashboard(
     val medicines by viewModel.medicineInventory.collectAsState()
     val illnessCatalog by viewModel.illnessCatalog.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
+    var showVoiceAssistant by remember { mutableStateOf(false) }
     
     // Tabs
     var selectedTab by remember { mutableStateOf(0) }
@@ -43,12 +47,21 @@ fun AshaDashboard(
 
     Scaffold(
         floatingActionButton = {
-            if (selectedTab == 0) {
+            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 FloatingActionButton(
-                    onClick = { showAddDialog = true },
-                    containerColor = MaterialTheme.colorScheme.primary
+                    onClick = { showVoiceAssistant = true },
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = "Add Case", tint = Color.White)
+                    Icon(Icons.Default.Mic, contentDescription = "AI Doctor")
+                }
+
+                if (selectedTab == 0) {
+                    FloatingActionButton(
+                        onClick = { showAddDialog = true },
+                        containerColor = MaterialTheme.colorScheme.primary
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = "Add Case", tint = Color.White)
+                    }
                 }
             }
         }
@@ -98,6 +111,14 @@ fun AshaDashboard(
                 showAddDialog = false
             }
         )
+    }
+
+    if (showVoiceAssistant) {
+        ModalBottomSheet(onDismissRequest = { showVoiceAssistant = false }) {
+            com.example.healthapp.ui.screens.voice.VoiceAssistantScreen(
+                onDismiss = { showVoiceAssistant = false }
+            )
+        }
     }
 }
 
@@ -151,22 +172,60 @@ fun IllnessCard(illness: com.example.healthapp.data.repository.IllnessRisk) {
         else -> Color(0xFF43A047)
     }
     
-    HealthAppCard(border = BorderStroke(1.dp, borderColor.copy(alpha = 0.5f))) {
+    var expanded by remember { mutableStateOf(false) }
+
+    HealthAppCard(
+        border = BorderStroke(1.dp, borderColor.copy(alpha = 0.5f)),
+        onClick = { expanded = !expanded } 
+    ) {
         Column {
             Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                Text(illness.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(illness.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                    if (illness.seasonalTag != null) {
+                         Text("SEASON: ${illness.seasonalTag}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                    }
+                }
                 if(illness.isEmergency) {
                     Badge(containerColor = MaterialTheme.colorScheme.error) { Text("EMERGENCY", color = Color.White) }
+                } else {
+                    Icon(if(expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown, "Expand")
                 }
             }
             Spacer(modifier = Modifier.height(4.dp))
             Text(illness.description, style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
             
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-            
-            Text(" Symptoms: ${illness.symptoms.joinToString(", ")}", style = MaterialTheme.typography.bodySmall)
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(" Action: ${illness.action}", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+            if (expanded) {
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                
+                // Symptoms
+                Text("Symptoms", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
+                Text(illness.symptoms.joinToString(", "), style = MaterialTheme.typography.bodySmall)
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Warning Signs
+                if (illness.warningSigns.isNotEmpty()) {
+                    Text("⚠️ Warning Signs", fontWeight = FontWeight.Bold, color = Color.Red, style = MaterialTheme.typography.labelMedium)
+                    illness.warningSigns.forEach { 
+                        Text("• $it", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+
+                // Prevention
+                if (illness.preventionMethods.isNotEmpty()) {
+                    Text("🛡️ Prevention", fontWeight = FontWeight.Bold, color = Color(0xFF1B5E20), style = MaterialTheme.typography.labelMedium)
+                    illness.preventionMethods.forEach { 
+                        Text("• $it", style = MaterialTheme.typography.bodySmall)
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                Text(" Action: ${illness.action}", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+            } else {
+                Text("Tap to see Prevention & Warning Signs", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+            }
         }
     }
 }

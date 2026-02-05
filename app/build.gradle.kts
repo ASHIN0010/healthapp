@@ -28,7 +28,7 @@ android {
         if (localPropertiesFile.exists()) {
              properties.load(localPropertiesFile.inputStream())
         }
-        buildConfigField("String", "GROK_API_KEY", "\"${properties.getProperty("GROK_API_KEY", "")}\"")
+        buildConfigField("String", "OPENAI_API_KEY", "\"${properties.getProperty("OPENAI_API_KEY", "")}\"")
     }
 
     buildTypes {

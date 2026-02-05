@@ -6,7 +6,7 @@ import retrofit2.http.POST
 
 data class GrokRequest(
     val messages: List<Message>,
-    val model: String = "grok-beta", // Or appropriate model name
+    val model: String = "gpt-4o", // OpenAI Model
     val stream: Boolean = false,
     val temperature: Double = 0.7
 )

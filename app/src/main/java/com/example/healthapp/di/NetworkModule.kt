@@ -17,7 +17,7 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
-    private const val BASE_URL = "https://api.x.ai/v1/" // Grok API Base URL (Verify this)
+    private const val BASE_URL = "https://api.openai.com/v1/" // OpenAI API URL
 
     @Provides
     @Singleton
@@ -28,7 +28,7 @@ object NetworkModule {
         
         val authInterceptor = Interceptor { chain ->
             val request = chain.request().newBuilder()
-                .addHeader("Authorization", "Bearer ${BuildConfig.GROK_API_KEY}")
+                .addHeader("Authorization", "Bearer ${BuildConfig.OPENAI_API_KEY}")
                 .addHeader("Content-Type", "application/json")
                 .build()
             chain.proceed(request)

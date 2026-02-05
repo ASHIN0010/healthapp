@@ -105,30 +105,45 @@ class TriageRepository @Inject constructor(
     private fun createIntelligentFallback(age: Int, gender: String, symptoms: String, catalog: List<IllnessRisk>): TriageResult {
         val symptomsLower = symptoms.lowercase()
         
-        // Find highest risk match
-        var matchedIllness: IllnessRisk? = null
-        
-        // Sort catalog by Risk (High->Medium->Low) to prioritize worst case
-        val sortedCatalog = catalog.sortedByDescending { it.riskLevel == "High" } // Simple sort, refining below
-        
-        // Better priority: High > Medium > Low
+        // 1. Critical Check: Match against specific Warning Signs first (Highest Priority)
+        val warningMatch = catalog.find { illness ->
+            illness.warningSigns.any { sign -> symptomsLower.contains(sign.lowercase()) }
+        }
+
+        if (warningMatch != null) {
+            return TriageResult(
+                priority = "High Risk",
+                explanation = "Critical Warning Sign Detected: ${warningMatch.name}. ${warningMatch.description}",
+                recommendedAction = warningMatch.action,
+                preventiveMeasures = warningMatch.preventionMethods.joinToString(". "),
+                immediateSolutions = "Immediate Emergency Care Required.",
+                patientAge = age,
+                patientGender = gender,
+                symptoms = symptoms
+            )
+        }
+
+        // 2. Symptom Matching
+        // Sort catalog by Risk (High->Medium->Low)
         val highRiskInfo = catalog.filter { it.riskLevel == "High" }
         val mediumRiskInfo = catalog.filter { it.riskLevel == "Medium" }
         val lowRiskInfo = catalog.filter { it.riskLevel == "Low" }
         
-        // Check High
+        var matchedIllness: IllnessRisk? = null
+        
+        // Check High Risk Symptoms
         matchedIllness = highRiskInfo.find { illness -> 
             illness.symptoms.any { symptomsLower.contains(it.lowercase()) } || symptomsLower.contains(illness.name.lowercase())
         }
         
-        // Check Medium
+        // Check Medium Risk
         if (matchedIllness == null) {
             matchedIllness = mediumRiskInfo.find { illness -> 
                 illness.symptoms.any { symptomsLower.contains(it.lowercase()) } || symptomsLower.contains(illness.name.lowercase())
             }
         }
         
-        // Check Low
+        // Check Low Risk
         if (matchedIllness == null) {
             matchedIllness = lowRiskInfo.find { illness -> 
                 illness.symptoms.any { symptomsLower.contains(it.lowercase()) } || symptomsLower.contains(illness.name.lowercase())
@@ -139,7 +154,7 @@ class TriageRepository @Inject constructor(
         val priority = matchedIllness?.riskLevel ?: "Low Risk"
         val explanation = matchedIllness?.description ?: "Unclassified symptoms. Please consult a doctor."
         val action = matchedIllness?.action ?: "Monitor and rest."
-        val preventive = "Maintain hygiene and balanced diet."
+        val preventive = matchedIllness?.preventionMethods?.joinToString(". ") ?: "Maintain hygiene and balanced diet."
         val solution = matchedIllness?.action ?: "Consult a specialist."
 
         return TriageResult(

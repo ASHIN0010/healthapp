@@ -269,6 +269,46 @@ fun HospitalDashboard(
                 val ashaWorkers by viewModel.ashaWorkers.collectAsState()
                 var showAssignDialog by remember { mutableStateOf<TriageResult?>(null) }
                 
+                // Risk Analytics
+                com.example.healthapp.ui.components.SectionHeader(title = "Risk Distribution Analytics")
+                val riskCounts = triageLogs.groupingBy { it.priority }.eachCount()
+                
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    val high = riskCounts["High Risk"] ?: 0
+                    val medium = riskCounts["Medium Risk"] ?: 0
+                    val low = riskCounts["Low Risk"] ?: 0
+                    val total = high + medium + low
+                    
+                    // High Risk Card
+                    HealthAppCard(modifier = Modifier.weight(1f), color = Color(0xFFFFEBEE)) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("High", fontWeight = FontWeight.Bold, color = Color.Red)
+                            Text("$high", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = Color.Red)
+                            Text("${if(total>0) (high*100)/total else 0}%", style = MaterialTheme.typography.labelSmall, color = Color.Red)
+                        }
+                    }
+                    
+                    // Medium Risk Card
+                    HealthAppCard(modifier = Modifier.weight(1f), color = Color(0xFFFFF8E1)) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("Medium", fontWeight = FontWeight.Bold, color = Color(0xFFF57F17))
+                            Text("$medium", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = Color(0xFFF57F17))
+                            Text("${if(total>0) (medium*100)/total else 0}%", style = MaterialTheme.typography.labelSmall, color = Color(0xFFF57F17))
+                        }
+                    }
+                    
+                    // Low Risk Card
+                    HealthAppCard(modifier = Modifier.weight(1f), color = Color(0xFFE8F5E9)) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("Low", fontWeight = FontWeight.Bold, color = Color(0xFF1B5E20))
+                            Text("$low", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = Color(0xFF1B5E20))
+                            Text("${if(total>0) (low*100)/total else 0}%", style = MaterialTheme.typography.labelSmall, color = Color(0xFF1B5E20))
+                        }
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+
                 com.example.healthapp.ui.components.SectionHeader(title = "Live AI Triage Queue")
                 
                 if (triageLogs.isNotEmpty()) {
